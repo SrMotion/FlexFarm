@@ -1,4 +1,4 @@
-# flexfarm
+# Growtopia FlexFarm
 **FlexFarm - An advanced Growtopia Multibotting Software**
 
 # Compatibility:
