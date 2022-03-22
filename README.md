@@ -12,15 +12,6 @@ FlexFarm - An advanced Growtopia Multibotting Software
 - Spammer
 - Send Self SendPacket
 
-ADDED SINCE V2:
-- *NEW* Account Checker
-- *NEW* Red damage to block exploit (NOT VISUAL, EVERYONE SEES IT)
-- *NEW* Drop entire inventory with spreading
-- *NEW* Config exporting/saving
-- A few fixes.
-- Many more
-
-
 
 current version: V1.2
 # MADE BY SrMotion
