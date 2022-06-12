@@ -1,4 +1,4 @@
-# Growtopia FlexFarm
+# Growtopia FlexFarm (Not UPDATED)
 **FlexFarm - An advanced Growtopia Multibotting Software**
 # **Don't add me in discord for help with compiling/adding feature/some simple thing with FlexFarm or you will get instantly blocked**
 
