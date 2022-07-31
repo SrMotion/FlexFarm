@@ -1,6 +1,7 @@
-# Growtopia FlexFarm (soon i will update this shit)
+# Growtopia FlexFarm (Updated)
 **FlexFarm - An advanced Growtopia Multibotting Software**
 # **Don't add me in discord for help with compiling/adding feature/some simple thing with FlexFarm or you will get instantly blocked**
+Anyone using or selling "fixed FlexFarm" is a human failure
 
 # Compatibility:
 - Windows 7+
