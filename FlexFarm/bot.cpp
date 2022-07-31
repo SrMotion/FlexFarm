@@ -1,6 +1,20 @@
 #include "bot.h"
+#include "HTTPRequest.hpp"
 
+std::vector<std::string> split(std::string s, std::string delimiter) {
+	size_t pos_start = 0, pos_end, delim_len = delimiter.length();
+	std::string token;
+	std::vector<std::string> res;
 
+	while ((pos_end = s.find(delimiter, pos_start)) != std::string::npos) {
+		token = s.substr(pos_start, pos_end - pos_start);
+		pos_start = pos_end + delim_len;
+		res.push_back(token);
+	}
+
+	res.push_back(s.substr(pos_start));
+	return res;
+}
 void log(std::string aga) {
     //MessageBoxA(0, aga.c_str(), 0, 0);
 }
@@ -36,7 +50,9 @@ void GrowtopiaBot::startAsync() {
 void GrowtopiaBot::eventLoop() {
 	try {
 		while (running.load())
+		{
 			hostService();
+		}
 	}
 	catch (...) { }
     running = false;
@@ -118,7 +134,7 @@ bool GrowtopiaBot::connect(std::string ipAddr, int port) {
 			ENetAddress address;
 			enet_address_set_host_ip(&address, ipAddr.c_str());
 			address.port = port;
-            peer = enet_host_connect(host, &address, 10, 0);
+			peer = enet_host_connect(host, &address, 10, 0);
 			if (peer) {
 				log("connected\n");
 				enet_host_flush(host);
@@ -169,15 +185,15 @@ void GrowtopiaBot::onLoginRequested() {
 	std::uniform_int_distribution<int> distribution(INT_MIN, INT_MAX);
 	auto mac = GenerateMacAddress();
 	auto hash_str = mac + "RT";
-	rtvar loginVar; // = rtvar::parse("tankIDName|mrec3o\ntankIDPass|11211453alp*\nrequestedName|SquishCake\nf|1\nprotocol|143\ngame_version|3.68\nfz|11058512\nlmode|0\ncbits|0\nplayer_age|16\nGDPR|1\nhash2|2087608419\nmeta|ni.com\nfhash|-716928004\nrid|018B57DF0BD79D2108669CA30434CC1E\nplatformID|0\ndeviceVersion|0\ncountry|us\nhash|-1815455562\nmac|02:8c:aa:20:e0:18\nwk|C2E5A6FCA9C9C2DBFC6EE67561E3BD35\nzf|-1807560130");
-	//loginVar.set("tankIDName", loginInfo.getGrowID());
-	//loginVar.set("tankIDPass", loginInfo.password);
-	//loginVar.set("game_version", loginInfo.version);
+	http::Request request{ "http://a104-125-3-135.deploy.static.akamaitechnologies.com/growtopia/server_data.php" };
+	const auto response = request.send("POST", "version=3.95&protocol=162&platform=0", { "Host: www.growtopia1.com" });
+	rtvar var1 = rtvar::parse({ response.body.begin(), response.body.end() });
+	rtvar loginVar;
 	loginVar.append("tankIDName|" + loginInfo.getGrowID());
 	loginVar.append("tankIDPass|" + loginInfo.password);
 	loginVar.append("requestedName|SmileZero"); // :(
 	loginVar.append("f|1");
-	loginVar.append("protocol|143"); //sus
+	loginVar.append("protocol|162"); //sus
 	loginVar.append("game_version|" + loginInfo.version);
 	loginVar.append("fz|" + std::to_string(distribution(rng)));
 	loginVar.append("lmode|0");
@@ -185,10 +201,11 @@ void GrowtopiaBot::onLoginRequested() {
 	loginVar.append("player_age|26");
 	loginVar.append("GDPR|1");
 	loginVar.append("hash2|" + std::to_string(HashStr(hash_str.c_str()))); //sus
-	loginVar.append("meta|ni.com");
+    log(var1.get("meta"));
+	loginVar.append("meta|" + var1.get("meta"));
 	loginVar.append("fhash|-716928004");
 	loginVar.append("rid|" + RandomString(32, "0123456789ABCDEF"));
-    loginVar.append("gid|" + RandomString(32, "0123456789ABCDEF"));
+	loginVar.append("gid|" + RandomString(32, "0123456789ABCDEF"));
 	loginVar.append("platformID|0");
 	loginVar.append("deviceVersion|0");
 	loginVar.append("country|us");
@@ -202,6 +219,8 @@ void GrowtopiaBot::onLoginRequested() {
 	if (user && token) {
 		loginVar.append("user|" + std::to_string(user));
 		loginVar.append("token|" + std::to_string(token));
+		loginVar.append("UUIDToken|" + login_UUIDtoken);
+		loginVar.append("doorID|" + login_doorID);
 		loginVar.set("lmode", "1");
 	}
 	//loginVar.append("wk|" + RandomString(32, "0123456789ABCDEF"));
@@ -275,13 +294,16 @@ void GrowtopiaBot::onPacketCallFunction(gameupdatepacket_t* packet) {
 	std::string function(varlist.get(0).get_string());
 	if (!function.empty()) {
 		if (function == "OnSendToServer") {
-			token = varlist.get(2).get_uint32() != -1 ? varlist.get(2).get_uint32() : token;
-			user = varlist.get(3).get_uint32();
-			subserver_ip = varlist.get(4).get_string().erase(varlist.get(4).get_string().length() - 1);
-			//loginInfo.serverIp = varlist.get(4).get_string().erase(varlist.get(4).get_string().length() - 1);
-			subserver_port = varlist.get(1).get_uint32();
-			//loginInfo.serverPort = varlist.get(1).get_uint32();
-			connect(subserver_ip, subserver_port);
+				token = varlist.get(2).get_uint32() != -1 ? varlist.get(2).get_uint32() : token;
+				user = varlist.get(3).get_uint32();
+				std::string delimiter = "|";
+				std::vector<std::string> v = split(varlist.get(4).get_string(), delimiter);
+				std::string subserver_ip = varlist.get(4).get_string().erase(varlist.get(4).get_string().length() - 1);
+				int subserver_port = varlist.get(1).get_uint32();
+				login_UUIDtoken = v[2].c_str();
+				login_doorID = v[1].c_str();
+
+				connect(v[0].c_str(), subserver_port);
 		}
 		else if (function.find("OnSuperMainStartAcceptLogon") != -1) {
 			SendString(peer, host, 2, "action|enter_game");
@@ -630,6 +652,7 @@ void GrowtopiaBot::pickupObjects(vector2i_t t_v, bool strict, bool pickupGems)
 	}
 }
 
+
 void GrowtopiaBot::sendPlayerState() {
 	Action action;
 	action.type = PACKET_STATE;
@@ -888,7 +911,7 @@ bool VirtualBot::breakTile(int x, int y, int sleepDelay)
 					punchDmg = 8.0;
 				}
 			}
-            int thing = (int)std::ceil(static_cast<double>(item.breakHits) / punchDmg);
+			int thing = (int)std::ceil(static_cast<double>(item.breakHits) / punchDmg);
 			for (int i = 0; i < thing; i++) {
 				punch(x, y);
 				if (i != thing - 1)
